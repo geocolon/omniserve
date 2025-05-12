@@ -1,0 +1,56 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id         String   @id @default(uuid())
+    name       String
+    email      String   @unique
+    password   String
+    isProvider Boolean  @default(false)
+    currentLat Float?
+    currentLng Float?
+    socketId   String?
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    ridesRequested   Ride[]    @relation("Requester")
+    ridesProvided    Ride[]    @relation("Provider")
+    sentMessages     Message[] @relation("SentMessages")
+    receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+model Ride {
+    id          String   @id @default(uuid())
+    requesterId String
+    providerId  String?
+    status      String
+    serviceType String
+    originLat   Float
+    originLng   Float
+    destLat     Float
+    destLng     Float
+    createdAt   DateTime @default(now())
+
+    requester User      @relation("Requester", fields: [requesterId], references: [id])
+    provider  User?     @relation("Provider", fields: [providerId], references: [id])
+    messages  Message[]
+}
+
+model Message {
+    id        String   @id @default(uuid())
+    fromId    String
+    toId      String
+    content   String
+    rideId    String
+    createdAt DateTime @default(now())
+
+    from User @relation("SentMessages", fields: [fromId], references: [id])
+    to   User @relation("ReceivedMessages", fields: [toId], references: [id])
+    ride Ride @relation(fields: [rideId], references: [id])
+}
